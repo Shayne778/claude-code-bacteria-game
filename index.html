@@ -276,7 +276,7 @@ let state = {};
 function initState() {
   state = {
     running: false,
-    player: { x: W/2, y: H - 60, vx: 0, speed: 4, mouseX: W/2 },
+    player: { x: W/2, y: H - 80, vx: 0, speed: 4, mouseX: W/2 },
     bullets: [],
     bacteria: [],
     particles: [],
@@ -700,98 +700,155 @@ function drawFloatingTexts() {
 
 // ─── Draw HUD ─────────────────────────────────────────────────────────────────
 function drawHUD() {
-  // Background panel
-  ctx.fillStyle = 'rgba(0,0,0,0.75)';
-  ctx.fillRect(0, 0, W, 55);
-  ctx.fillRect(0, H-50, W, 50);
+  const TOP_H = 72;   // top panel height
+  const BOT_H = 62;   // bottom panel height (loadout only)
+
+  // ── Top panel ──────────────────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(0,0,10,0.88)';
+  ctx.fillRect(0, 0, W, TOP_H);
+  ctx.strokeStyle = '#00ff8844';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, TOP_H); ctx.lineTo(W, TOP_H); ctx.stroke();
 
   // Score
-  ctx.font = 'bold 18px Courier New';
+  ctx.font = 'bold 22px Courier New';
   ctx.fillStyle = '#ffdd44';
   ctx.textAlign = 'left';
-  ctx.shadowBlur = 8; ctx.shadowColor = '#ffdd44';
-  ctx.fillText(`SCORE: ${state.score}`, 12, 24);
+  ctx.shadowBlur = 10; ctx.shadowColor = '#ffdd44';
+  ctx.fillText(`SCORE: ${state.score}`, 14, 30);
 
   // Wave
   ctx.fillStyle = '#aaffcc';
   ctx.shadowColor = '#aaffcc';
   ctx.textAlign = 'center';
-  ctx.fillText(`WAVE ${state.wave}`, W/2, 24);
+  ctx.fillText(`WAVE ${state.wave}`, W/2, 30);
 
-  // Wave progress bar
+  // Wave progress bar (under wave text)
   const waveProgress = state.waveTimer / state.waveInterval;
-  ctx.fillStyle = '#333';
-  ctx.fillRect(W/2 - 60, 28, 120, 6);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1a3322';
+  ctx.fillRect(W/2 - 70, 36, 140, 8);
   ctx.fillStyle = '#aaffcc';
-  ctx.fillRect(W/2 - 60, 28, 120 * waveProgress, 6);
+  ctx.fillRect(W/2 - 70, 36, 140 * waveProgress, 8);
+  ctx.strokeStyle = '#00ff8866';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(W/2 - 70, 36, 140, 8);
 
   // Kills
+  ctx.font = 'bold 22px Courier New';
   ctx.textAlign = 'right';
   ctx.fillStyle = '#88ccff';
-  ctx.shadowColor = '#88ccff';
-  ctx.fillText(`KILLS: ${state.totalKills}`, W-12, 24);
+  ctx.shadowBlur = 10; ctx.shadowColor = '#88ccff';
+  ctx.fillText(`KILLS: ${state.totalKills}`, W - 14, 30);
 
-  // Health bar
-  const hw = 200;
-  const hx = W/2 - hw/2;
-  const hy = H - 35;
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#111';
-  ctx.fillRect(hx - 2, hy - 2, hw + 4, 22);
+  // Health bar (full width of top panel, row 2)
+  const hw = W - 28;
+  const hx = 14;
+  const hy = 50;
   const hpColor = state.health > 50 ? '#44ff44' : state.health > 25 ? '#ffaa00' : '#ff3333';
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(hx, hy, hw, 16);
   ctx.fillStyle = hpColor;
-  ctx.shadowBlur = 6; ctx.shadowColor = hpColor;
-  ctx.fillRect(hx, hy, hw * (state.health / 100), 18);
-  ctx.strokeStyle = '#666';
+  ctx.shadowBlur = 8; ctx.shadowColor = hpColor;
+  ctx.fillRect(hx, hy, hw * (state.health / 100), 16);
+  ctx.strokeStyle = '#555';
   ctx.lineWidth = 1; ctx.shadowBlur = 0;
-  ctx.strokeRect(hx, hy, hw, 18);
+  ctx.strokeRect(hx, hy, hw, 16);
   ctx.font = 'bold 11px Courier New';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fff';
-  ctx.fillText(`PETRI DISH INTEGRITY: ${state.health}%`, W/2, hy + 13);
+  ctx.shadowBlur = 0;
+  ctx.fillText(`PETRI DISH INTEGRITY: ${state.health}%`, W/2, hy + 11);
 
-  // Antibiotic loadout
-  const slotW = 120, slotH = 38, startX = 10, startY = H - 48;
+  // ── Bottom panel (loadout) ─────────────────────────────────────────────────
+  const botY = H - BOT_H;
+  ctx.fillStyle = 'rgba(0,0,10,0.88)';
+  ctx.fillRect(0, botY, W, BOT_H);
+  ctx.strokeStyle = '#00ff8844';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, botY); ctx.lineTo(W, botY); ctx.stroke();
+
+  const slotW = Math.floor(W / 5); // 140px each for 700px canvas
   ANTIBIOTICS.forEach((abx, i) => {
-    const x = startX + i * (slotW - 14);
+    const sx = i * slotW;
     const active = i === state.currentAbx;
-    ctx.fillStyle = active ? abx.color + '44' : 'rgba(0,0,0,0.5)';
-    ctx.strokeStyle = active ? abx.color : '#444';
-    ctx.lineWidth = active ? 2 : 1;
-    ctx.shadowBlur = active ? 10 : 0;
-    ctx.shadowColor = abx.color;
-    ctx.fillRect(x, startY, 106, slotH);
-    ctx.strokeRect(x, startY, 106, slotH);
-    ctx.font = `bold ${active ? 11 : 10}px Courier New`;
-    ctx.fillStyle = active ? abx.color : '#777';
-    ctx.textAlign = 'left';
+
+    // Slot background
+    ctx.fillStyle = active ? abx.color + '30' : 'rgba(0,0,20,0.7)';
+    ctx.fillRect(sx, botY, slotW, BOT_H);
+
+    // Active highlight border
+    if (active) {
+      ctx.strokeStyle = abx.color;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 12; ctx.shadowColor = abx.color;
+      ctx.strokeRect(sx + 1, botY + 1, slotW - 2, BOT_H - 2);
+    } else {
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+      ctx.strokeRect(sx, botY, slotW, BOT_H);
+    }
+
+    // Key badge
     ctx.shadowBlur = active ? 6 : 0;
-    ctx.fillText(`[${abx.key}] ${abx.name}`, x + 5, startY + 15);
-    // Mini bullet preview
-    ctx.save();
-    ctx.translate(x + 90, startY + 19);
-    ctx.shadowBlur = active ? 8 : 0;
     ctx.shadowColor = abx.color;
+    ctx.fillStyle = active ? abx.color : '#555';
+    roundRect(sx + 6, botY + 7, 20, 20, 3, active ? abx.color : '#2a2a2a', active ? abx.color : '#555', 1);
+    ctx.font = 'bold 13px Courier New';
+    ctx.fillStyle = active ? '#000' : '#aaa';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 0;
+    ctx.fillText(abx.key, sx + 16, botY + 21);
+
+    // Antibiotic name
+    ctx.font = `bold ${active ? 14 : 13}px Courier New`;
+    ctx.fillStyle = active ? abx.color : '#888';
+    ctx.shadowBlur = active ? 6 : 0;
+    ctx.shadowColor = abx.color;
+    ctx.textAlign = 'left';
+    ctx.fillText(abx.name, sx + 30, botY + 21);
+
+    // Mini bullet preview (centered bottom half)
+    ctx.save();
+    ctx.translate(sx + slotW/2, botY + 44);
+    ctx.shadowBlur = active ? 10 : 3;
+    ctx.shadowColor = abx.color;
+    const sc = active ? 1.4 : 1.0;
+    ctx.scale(sc, sc);
     switch(abx.shape) {
       case 'ring':
-        ctx.strokeStyle = abx.color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*1.6); ctx.stroke();
+        ctx.strokeStyle = abx.color; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*1.6); ctx.stroke();
+        circle(0,0,3,abx.color,null);
         break;
       case 'capsule':
         ctx.fillStyle = abx.color;
-        ctx.beginPath(); ctx.roundRect(-3,-7,6,14,3); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(-4,-9,8,18,4); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(-2,-7,3,7);
         break;
       case 'helix':
-        ctx.strokeStyle = abx.color; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = abx.color; ctx.lineWidth = 2;
         ctx.beginPath();
-        for(let ii=-6;ii<=6;ii++){ctx.lineTo(Math.sin(ii*0.6)*3,ii);}
+        for(let ii=-8;ii<=8;ii++){
+          const hx2=Math.sin(ii*0.55+state.frame*0.15)*4;
+          if(ii===-8)ctx.moveTo(hx2,ii);else ctx.lineTo(hx2,ii);
+        }
+        ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1;
+        ctx.beginPath();
+        for(let ii=-8;ii<=8;ii++){
+          const hx2=Math.sin(ii*0.55+state.frame*0.15+Math.PI)*4;
+          if(ii===-8)ctx.moveTo(hx2,ii);else ctx.lineTo(hx2,ii);
+        }
         ctx.stroke();
         break;
       case 'star':
         ctx.fillStyle = abx.color;
         ctx.beginPath();
         for(let ii=0;ii<8;ii++){
-          const r=ii%2===0?6:3;
+          const r=ii%2===0?8:4;
           const a=(ii/8)*Math.PI*2;
           if(ii===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);
           else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
@@ -801,25 +858,36 @@ function drawHUD() {
       case 'wax':
         ctx.fillStyle = abx.color;
         ctx.beginPath();
-        ctx.moveTo(0,-7); ctx.bezierCurveTo(4,-3,4,3,2,7);
-        ctx.lineTo(-2,7); ctx.bezierCurveTo(-4,3,-4,-3,0,-7);
+        ctx.moveTo(0,-9); ctx.bezierCurveTo(6,-4,6,4,3,9);
+        ctx.lineTo(-3,9); ctx.bezierCurveTo(-6,4,-6,-4,0,-9);
         ctx.closePath(); ctx.fill();
         break;
     }
     ctx.restore();
   });
 
-  // Tooltip
+  // Dividers between slots
+  ctx.strokeStyle = '#00ff8822';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * slotW, botY);
+    ctx.lineTo(i * slotW, H);
+    ctx.stroke();
+  }
+
+  // ── Tooltip ────────────────────────────────────────────────────────────────
   if (state.tooltipTimer > 0) {
     const abx = ANTIBIOTICS[state.currentAbx];
     const alpha = Math.min(1, state.tooltipTimer / 20);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    roundRect(W/2 - 180, 60, 360, 34, 4, 'rgba(0,0,0,0.85)', abx.color, 1);
-    ctx.font = 'bold 12px Courier New';
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    roundRect(W/2 - 210, TOP_H + 8, 420, 36, 5, 'rgba(0,0,0,0.92)', abx.color, 1.5);
+    ctx.font = 'bold 13px Courier New';
     ctx.fillStyle = abx.color;
+    ctx.shadowBlur = 8; ctx.shadowColor = abx.color;
     ctx.textAlign = 'center';
-    ctx.fillText(`${abx.name}: ${abx.moa}`, W/2, 82);
+    ctx.fillText(`${abx.name}: ${abx.moa}`, W/2, TOP_H + 31);
     ctx.globalAlpha = 1;
   }
 
@@ -1022,7 +1090,7 @@ function update() {
     }
 
     // Reached bottom → damage health
-    if (b.y > H + 50) {
+    if (b.y > H - 62) {
       state.bacteria.splice(i, 1);
       state.health = Math.max(0, state.health - (b.isBoss ? 20 : 8));
       state.screenShake = 12;
