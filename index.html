@@ -276,7 +276,7 @@ let state = {};
 function initState() {
   state = {
     running: false,
-    player: { x: W/2, y: H - 80, vx: 0, speed: 4.8, mouseX: W/2 },
+    player: { x: W/2, y: H - 80, vx: 0, speed: 5.52, mouseX: W/2 },
     bullets: [],
     bacteria: [],
     particles: [],
@@ -1053,7 +1053,7 @@ function update() {
   else {
     // Mouse follow
     const dx = state.player.mouseX - p.x;
-    if (Math.abs(dx) > 4) p.vx = Math.sign(dx) * Math.min(p.speed * 1.5, Math.abs(dx) * 0.12);
+    if (Math.abs(dx) > 4) p.vx = Math.sign(dx) * Math.min(p.speed * 1.5, Math.abs(dx) * 0.138);
     else p.vx = 0;
   }
   p.x = Math.max(20, Math.min(W - 20, p.x + p.vx));
